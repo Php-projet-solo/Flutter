@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -36,6 +37,26 @@ class _AddEntityPageState extends State<AddEntityPage> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+  }
+
+  Future<void> _pickImage() async {
+    final cameras = await availableCameras();
+    final firstCamera = cameras.first;
+    final CameraController controller = CameraController(
+      firstCamera,
+      ResolutionPreset.medium,
+    );
+    await controller.initialize();
+
+    final XFile image = await controller.takePicture();
+
+    setState(() {
+      _imageFile = File(image.path);
+      List<int> imageBytes = _imageFile!.readAsBytesSync();
+      _formData['photo'] = base64Encode(imageBytes);
+    });
+
+    await controller.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -193,6 +214,12 @@ class _AddEntityPageState extends State<AddEntityPage> {
                 ],
               ),
 
+              SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: Icon(Icons.camera_alt),
+                label: Text("Prendre une photo"),
+              ),
               SizedBox(height: 20),
               _imageFile != null
                   ? Image.file(_imageFile!, height: 100)
