@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 class DetailPage extends StatelessWidget {
@@ -7,11 +9,14 @@ class DetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String base64Image = entity['photo'];
+    Uint8List bytes = base64Decode(base64Image);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(entity['nom']),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,7 +30,8 @@ class DetailPage extends StatelessWidget {
             Text('Longitude: ${entity['longitude']}'),
             Text('Contact: ${entity['nompersonnecontacter']}'),
             Text('Email: ${entity['emailcontacter']}'),
-            Text('Photo: ${entity['photo']}'),
+            Text('Photo:'),
+            Image.memory(bytes),
           ],
         ),
       ),
