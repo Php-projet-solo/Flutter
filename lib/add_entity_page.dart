@@ -39,26 +39,6 @@ class _AddEntityPageState extends State<AddEntityPage> {
     _getCurrentLocation();
   }
 
-  Future<void> _pickImage() async {
-    final cameras = await availableCameras();
-    final firstCamera = cameras.first;
-    final CameraController controller = CameraController(
-      firstCamera,
-      ResolutionPreset.medium,
-    );
-    await controller.initialize();
-
-    final XFile image = await controller.takePicture();
-
-    setState(() {
-      _imageFile = File(image.path);
-      List<int> imageBytes = _imageFile!.readAsBytesSync();
-      _formData['photo'] = base64Encode(imageBytes);
-    });
-
-    await controller.dispose();
-  }
-
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -96,6 +76,58 @@ class _AddEntityPageState extends State<AddEntityPage> {
     });
   }
 
+  Future<void> _selectDateTime() async {
+    DateTime now = DateTime.now();
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        DateTime fullDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        setState(() {
+          _selectedDate = fullDateTime;
+          _formData['date'] = DateFormat('yyyy-MM-dd HH:mm:ss').format(fullDateTime);
+        });
+      }
+    }
+  }
+
+  Future<void> _openCamera() async {
+    final cameras = await availableCameras();
+    final camera = cameras.first;
+
+    final image = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(camera: camera),
+      ),
+    );
+
+    if (image != null) {
+      setState(() {
+        _imageFile = File(image);
+        List<int> imageBytes = _imageFile!.readAsBytesSync();
+        _formData['photo'] = base64Encode(imageBytes);
+      });
+    }
+  }
+
   Future<void> addEntity() async {
     if (widget.token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,38 +158,6 @@ class _AddEntityPageState extends State<AddEntityPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur de connexion: $e')),
       );
-    }
-  }
-
-  Future<void> _selectDateTime() async {
-    DateTime now = DateTime.now();
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: now,
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        DateTime fullDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        setState(() {
-          _selectedDate = fullDateTime;
-          _formData['date'] = DateFormat('yyyy-MM-dd HH:mm:ss').format(fullDateTime);
-        });
-      }
     }
   }
 
@@ -213,14 +213,15 @@ class _AddEntityPageState extends State<AddEntityPage> {
                   ),
                 ],
               ),
-
               SizedBox(height: 20),
+
               ElevatedButton.icon(
-                onPressed: _pickImage,
+                onPressed: _openCamera,
                 icon: Icon(Icons.camera_alt),
                 label: Text("Prendre une photo"),
               ),
               SizedBox(height: 20),
+
               _imageFile != null
                   ? Image.file(_imageFile!, height: 100)
                   : Text("Aucune image sélectionnée."),
@@ -238,6 +239,58 @@ class _AddEntityPageState extends State<AddEntityPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class CameraScreen extends StatefulWidget {
+  final CameraDescription camera;
+
+  CameraScreen({required this.camera});
+
+  @override
+  _CameraScreenState createState() => _CameraScreenState();
+}
+
+class _CameraScreenState extends State<CameraScreen> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CameraController(widget.camera, ResolutionPreset.high);
+    _initializeControllerFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _takePicture() async {
+    await _initializeControllerFuture;
+    final image = await _controller.takePicture();
+    Navigator.pop(context, image.path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Prendre une photo")),
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          return snapshot.connectionState == ConnectionState.done
+              ? Stack(children: [
+            CameraPreview(_controller),
+            Positioned(bottom: 20, left: MediaQuery.of(context).size.width / 2 - 30,
+                child: FloatingActionButton(onPressed: _takePicture, child: Icon(Icons.camera))),
+          ])
+              : Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }
