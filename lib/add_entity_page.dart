@@ -181,20 +181,24 @@ class _AddEntityPageState extends State<AddEntityPage> {
               TextFormField(
                 decoration: InputDecoration(labelText: 'Description'),
                 onSaved: (value) => _formData['description'] = value,
+                validator: (value) => value!.isEmpty ? 'Ce champ est requis' : null,
               ),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Prix d\'entrée (€)'),
                 keyboardType: TextInputType.number,
                 onSaved: (value) => _formData['prixentree'] = value != null && value.isNotEmpty ? double.tryParse(value) : null,
+                validator: (value) => value!.isEmpty ? 'Ce champ est requis' : null,
               ),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Nom du contact'),
                 onSaved: (value) => _formData['nompersonnecontacter'] = value,
+                validator: (value) => value!.isEmpty ? 'Ce champ est requis' : null,
               ),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Email du contact'),
                 onSaved: (value) => _formData['emailcontacter'] = value,
                 keyboardType: TextInputType.emailAddress,
+                validator: (value) => value!.isEmpty ? 'Ce champ est requis' : null,
               ),
               SizedBox(height: 20),
 
@@ -230,6 +234,20 @@ class _AddEntityPageState extends State<AddEntityPage> {
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
+                    if (_selectedDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Veuillez sélectionner une date.')),
+                      );
+                      return;
+                    }
+
+                    if (_imageFile == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Veuillez prendre une photo.')),
+                      );
+                      return;
+                    }
+
                     _formKey.currentState!.save();
                     addEntity();
                   }
