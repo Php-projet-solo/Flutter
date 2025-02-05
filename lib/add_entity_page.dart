@@ -138,7 +138,8 @@ class _AddEntityPageState extends State<AddEntityPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.88/api/index.php'),
+      //  Uri.parse('http://192.168.1.88/api/index.php'),
+        Uri.parse('http://192.168.43.19/api/index.php'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
