@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:html_unescape/html_unescape.dart';
 import 'detail_page.dart';
 import 'add_entity_page.dart';
 import 'dart:convert';
@@ -158,7 +159,7 @@ class _HomePageState extends State<HomePage> {
           final entity = entities[index];
           return ListTile(
             title: Text(entity['nom']),
-            subtitle: Text(entity['description']),
+            subtitle: Text(HtmlUnescape().convert(entity['description'])),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(

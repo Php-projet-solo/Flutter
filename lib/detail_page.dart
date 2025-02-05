@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:html_unescape/html_unescape.dart';
 
 class DetailPage extends StatelessWidget {
   final Map entity;
@@ -23,7 +24,7 @@ class DetailPage extends StatelessWidget {
           children: [
             Text('Id: ${entity['id_competition']}'),
             Text('Nom: ${entity['nom']}'),
-            Text('Description: ${entity['description']}'),
+            Text('Description: ${HtmlUnescape().convert(entity['description'])}'),
             Text('Date: ${entity['date']}'),
             Text('Prix: ${entity['prixentree']}€'),
             Text('Latitude: ${entity['latitude']}'),
